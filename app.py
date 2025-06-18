@@ -1,20 +1,24 @@
-import streamlit as st
 import logging
+from typing import List, Tuple
 from utils.retrieval import VectorDB
 from utils.generation import ResponseGenerator
 from config import Config
+import streamlit as st
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 
 @st.cache_resource
-def load_rag_components():
-    """Initialize and cache RAG components"""
+def initialize_components():
+    """Initialize RAG components with caching"""
     try:
         logger.info("Initializing VectorDB...")
         vector_db = VectorDB()
@@ -27,41 +31,45 @@ def load_rag_components():
         
         return vector_db, generator
     except Exception as e:
-        logger.error(f"Initialization failed: {str(e)}")
-        st.error("System initialization failed. Please check logs.")
+        logger.critical(f"Initialization failed: {str(e)}")
+        st.error("System initialization failed. Check logs.")
         st.stop()
 
-def generate_response(query, vector_db, generator):
-    """Process query through RAG pipeline"""
+def generate_response(message: str, chat_history: List[Tuple[str, str]], vector_db: VectorDB, generator: ResponseGenerator) -> List[Tuple[str, str]]:
+    """Process user query through RAG pipeline"""
     try:
-        with st.spinner("Searching knowledge base..."):
-            retrieved = vector_db.query(query)
-            if not retrieved['documents']:
-                return "No relevant information found."
-            
-            context = "\n\n".join(
-                f"Source: {meta['source']}\nContent: {text[:2000]}"
-                for text, meta in zip(retrieved['documents'], retrieved['metadatas'])
-            )
-            
-        with st.spinner("Generating response..."):
-            return generator.generate(query, context)
+        # Document Retrieval
+        retrieved = vector_db.query(message)
+        if not retrieved['documents']:
+            logger.warning("No documents found for query")
+            return chat_history + [(message, "No relevant information found")]
+        
+        # Prepare Context
+        context = "\n\n".join(
+            f"Source: {meta['source']}\nContent: {text[:2000]}{'...' if len(text)>2000 else ''}"
+            for text, meta in zip(retrieved['documents'], retrieved['metadatas'])
+        )
+        logger.debug(f"Context prepared for query: {message[:50]}...")
+        
+        # Generate Response
+        response = generator.generate(message, context)
+        return chat_history + [(message, str(response))]
+        
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}")
-        return f"Error: {str(e)}"
+        return chat_history + [(message, "Error processing request")]
 
 def main():
     st.set_page_config(
-        page_title="RAG Chatbot",
-        page_icon="🤖",
+        page_title="IQRA University FYP - Virtual Office Platform",
+        page_icon="📚",
         layout="wide"
     )
     
-    st.title("📚 RAG Chatbot")
-    st.caption("Powered by Gemini AI")
+    st.title("📚 Virtual Office Platform")
     
     # Initialize components
-    vector_db, generator = load_rag_components()
+    vector_db, generator = initialize_components()
     
     # Initialize chat history
     if "messages" not in st.session_state:
@@ -83,11 +91,20 @@ def main():
         
         # Generate and display response
         with st.chat_message("assistant"):
-            response = generate_response(prompt, vector_db, generator)
-            st.markdown(response)
-        
-        # Add assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response})
+            try:
+                # Convert message format for processing
+                tuple_history = [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]
+                
+                # Get response
+                response = generate_response(prompt, tuple_history, vector_db, generator)[-1][1]
+                
+                st.markdown(response)
+                
+                # Add assistant response to history
+                st.session_state.messages.append({"role": "assistant", "content": response})
+            except Exception as e:
+                logger.error(f"UI rendering error: {str(e)}")
+                st.error("Error displaying response")
 
 if __name__ == "__main__":
     main()

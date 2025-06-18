@@ -16,7 +16,7 @@ class Config:
         return key
     
     # Model configuration
-    GEMINI_MODEL = "gemini-pro"
+    GEMINI_MODEL = "gemini-1.5-flash"
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
     
     # Path configuration
@@ -26,6 +26,9 @@ class Config:
     # Performance settings
     MAX_RETRIES = 3
     RETRY_DELAY = 1
+    
+    def __init__(self):
+        logger.info(f"Initialized config with model {self.GEMINI_MODEL}")
 
     # this is the above code for the stremlit
 
