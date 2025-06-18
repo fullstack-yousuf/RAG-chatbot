@@ -1,0 +1,75 @@
+
+About Virtual Office Platform (VOP)
+-----------------------------------
+Virtual Office Platform (VOP) is an innovative, all-in-one collaboration and business management solution designed to meet the needs of modern remote teams, freelancers, and growing enterprises. It offers tools for client relationship management (CRM), real-time communication, project tracking, and intelligent automation. VOP aims to streamline workflows, increase productivity, and enhance team collaboration in digital environments. The platform is co-founded by Yousuf Asad and Younus, two visionary entrepreneurs committed to revolutionizing the way remote work is organized and executed.
+
+Virtual Office Platform – Dummy Data
+
+Client Information (CRM Module)
+---------------------------------
+The CRM module of the Virtual Office Platform helps manage detailed client profiles, project statuses, and employee assignments. It enables efficient communication, personalized support, and project tracking. Below is the sample client data:
+
+Client ID: C001
+Name: Sarah Malik
+Company: Malik Solutions
+Email: sarah@maliksolutions.com
+Phone: +92-300-1234567
+Project: E-commerce Web App
+Assigned Employee: E002 (Amna Shah)
+Status: Active
+
+Client ID: C002
+Name: Ahmed Raza
+Company: Raza Traders
+Email: ahmed.raza@razatraders.com
+Phone: +92-301-7654321
+Project: Inventory Management System
+Assigned Employee: E001 (Bilal Khan)
+Status: On Hold
+
+Client ID: C003
+Name: Lisa John
+Company: FutureTech Inc.
+Email: lisa@futuretech.com
+Phone: +92-345-1122334
+Project: AI Chatbot Integration
+Assigned Employee: E003 (Danish Ali)
+Status: Completed
+
+Employee Directory
+--------------------
+The following table contains detailed information about employees currently assigned to various client projects.
+
+Employee ID: E001
+Name: Bilal Khan
+Role: Project Manager
+Email: bilal.khan@vop.com
+Department: Development
+
+Employee ID: E002
+Name: Amna Shah
+Role: Frontend Developer
+Email: amna.shah@vop.com
+Department: UI/UX
+
+Employee ID: E003
+Name: Danish Ali
+Role: AI Specialist
+Email: danish.ali@vop.com
+Department: AI & Automation
+
+Employee ID: E004
+Name: Ayesha Noor
+Role: CRM Support Executive
+Email: ayesha.noor@vop.com
+Department: Customer Support
+
+Roles and Responsibilities
+----------------------------
+Project Manager: Manages the complete software development lifecycle, assigns tasks, and acts as the bridge between client and tech team.
+
+Frontend Developer: Responsible for developing the client-side of applications, ensuring responsiveness and design compatibility across devices.
+
+AI Specialist: Designs and integrates intelligent systems like chatbots and data-driven decision modules.
+
+CRM Support Executive: Handles client onboarding, responds to inquiries, and ensures high client satisfaction via CRM tools.
