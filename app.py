@@ -4,7 +4,7 @@ import streamlit as st
 import sys
 import os
 
-# Add project root to Python path
+# Fix Python path for Streamlit Cloud
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 # Configure logging
@@ -31,10 +31,7 @@ except ImportError as e:
 def initialize_components():
     """Initialize RAG components with caching"""
     try:
-        logger.info("Initializing configuration...")
         config = Config()
-        
-        logger.info("Initializing VectorDB...")
         vector_db = VectorDB(
             embedding_model=config.EMBEDDING_MODEL,
             db_path=config.VECTOR_DB_PATH,
@@ -43,86 +40,48 @@ def initialize_components():
         
         if not vector_db.add_documents():
             raise RuntimeError("Document loading failed")
-        
-        logger.info("Initializing Response Generator...")
+            
         generator = ResponseGenerator(
             api_key=config.GEMINI_API_KEY,
             model=config.GEMINI_MODEL
         )
-        
         return vector_db, generator
     except Exception as e:
         logger.critical(f"Initialization failed: {str(e)}")
         st.error("System initialization failed. Check logs.")
         st.stop()
 
-def generate_response(message: str, vector_db: VectorDB, generator: ResponseGenerator) -> str:
-    """Process user query through RAG pipeline"""
-    try:
-        # Document Retrieval
-        retrieved = vector_db.query(message)
-        if not retrieved['documents']:
-            logger.warning("No documents found for query")
-            return "No relevant information found"
-        
-        # Prepare Context
-        context = "\n\n".join(
-            f"Source: {meta['source']}\nContent: {text[:2000]}{'...' if len(text)>2000 else ''}"
-            for text, meta in zip(retrieved['documents'], retrieved['metadatas'])
-        )
-        logger.debug(f"Context prepared for query: {message[:50]}...")
-        
-        # Generate Response
-        response = generator.generate(message, context)
-        return str(response)
-        
-    except Exception as e:
-        logger.error(f"Error processing query: {str(e)}")
-        return f"Error processing request: {str(e)}"
-
 def main():
-    st.set_page_config(
-        page_title="IQRA University FYP - Virtual Office Platform",
-        page_icon="📚",
-        layout="wide"
-    )
-    
-    st.title("📚 Virtual Office Platform")
-    
-    # Initialize components
+    st.set_page_config(page_title="RAG Chatbot", layout="wide")
     vector_db, generator = initialize_components()
     
-    # Initialize chat history
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
-    # Display chat messages
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
     
-    # Chat input
     if prompt := st.chat_input("Ask about your documents..."):
-        # Add user message to chat history
         st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
         
-        # Generate and display response
         with st.chat_message("assistant"):
             try:
-                response = generate_response(prompt, vector_db, generator)
+                retrieved = vector_db.query(prompt)
+                context = "\n\n".join(
+                    f"Source: {meta['source']}\n{text[:2000]}"
+                    for text, meta in zip(retrieved['documents'], retrieved['metadatas'])
+                )
+                response = generator.generate(prompt, context)
                 st.markdown(response)
                 st.session_state.messages.append({"role": "assistant", "content": response})
             except Exception as e:
-                logger.error(f"UI rendering error: {str(e)}")
-                st.error("Error displaying response")
+                st.error(f"Error: {str(e)}")
 
 if __name__ == "__main__":
     main()
-
 # this above is a code for stream lit
 
 
