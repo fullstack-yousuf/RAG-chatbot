@@ -1,12 +1,11 @@
-import logging
 import os
 import sys
+import logging
 from typing import List, Tuple
-
 import streamlit as st
 
-# Fix Python path for Streamlit Cloud
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+# Fix Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Configure logging
 logging.basicConfig(
@@ -14,17 +13,19 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler()]
 )
-logger = logging.getLogger(__name__)
 
 try:
     # Absolute imports
     from utils.retrieval import VectorDB
     from utils.generation import ResponseGenerator
+    from utils.file_processor import FileProcessor  # Updated import
     from config import Config
 except ImportError as e:
-    logger.error(f"Import error: {str(e)}")
-    st.error("Failed to import required modules. Check the logs.")
+    logging.error(f"Import error: {str(e)}")
+    st.error("Configuration error - check logs")
     st.stop()
+
+# Rest of your app code...
 
 @st.cache_resource
 def initialize_components():
