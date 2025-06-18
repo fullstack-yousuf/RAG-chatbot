@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 try:
     from utils.retrieval import VectorDB
     from utils.generation import ResponseGenerator
-    from utils.file_processor import SomeFunction  
+    from utils.file_processor import FileProcessor  
     from config import Config
 except ImportError as e:
     logger.critical(f"Import error: {str(e)}")
