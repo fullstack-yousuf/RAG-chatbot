@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 class VectorDB:
     def __init__(self):
         logger.info("Initializing VectorDB...")
-        self.embedder = SentenceTransformer(Config.EMBEDDING_MODEL)
+        config = Config()
+        self.embedder = SentenceTransformer(config.EMBEDDING_MODEL)
         logger.info("Loaded embedding model: %s", Config.EMBEDDING_MODEL)
         
         self.processor = FileProcessor()
