@@ -5,30 +5,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Config:
+    def __init__(self):
+        self._gemini_api_key = None
+        self.GEMINI_MODEL = "gemini-1.5-flash"
+        self.EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+        self.VECTOR_DB_PATH = "knowledge_base/faiss_db"
+        self.DOCUMENTS_PATH = "knowledge_base/documents"
+        self.MAX_RETRIES = 3
+        self.RETRY_DELAY = 1
+        self._load_api_key()
+
+    def _load_api_key(self):
+        """Load API key from Streamlit secrets or environment"""
+        try:
+            self._gemini_api_key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+            if not self._gemini_api_key:
+                raise ValueError("GEMINI_API_KEY not found in secrets or environment variables")
+            logger.info("Successfully loaded Gemini API key")
+        except Exception as e:
+            logger.critical(f"Failed to load API key: {str(e)}")
+            raise
+
     @property
     def GEMINI_API_KEY(self):
-        """Get API key from Streamlit secrets or environment"""
-        key = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
-        if not key:
-            logger.error("GEMINI_API_KEY not found!")
-            st.error("API key configuration missing")
-            st.stop()
-        return key
-    
-    # Model configuration
-    GEMINI_MODEL = "gemini-1.5-flash"
-    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-    
-    # Path configuration
-    VECTOR_DB_PATH = "knowledge_base/faiss_db"
-    DOCUMENTS_PATH = "knowledge_base/documents"
-    
-    # Performance settings
-    MAX_RETRIES = 3
-    RETRY_DELAY = 1
-    
-    def __init__(self):
-        logger.info(f"Initialized config with model {self.GEMINI_MODEL}")
+        """Get the loaded API key"""
+        if not self._gemini_api_key:
+            raise ValueError("API key not initialized")
+        return self._gemini_api_key
 
     # this is the above code for the stremlit
 

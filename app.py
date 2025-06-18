@@ -1,9 +1,9 @@
 import logging
 from typing import List, Tuple
+import streamlit as st
 from utils.retrieval import VectorDB
 from utils.generation import ResponseGenerator
 from config import Config
-import streamlit as st
 
 # Configure logging
 logging.basicConfig(
@@ -20,14 +20,24 @@ logger = logging.getLogger(__name__)
 def initialize_components():
     """Initialize RAG components with caching"""
     try:
+        logger.info("Initializing configuration...")
+        config = Config()
+        
         logger.info("Initializing VectorDB...")
-        vector_db = VectorDB()
+        vector_db = VectorDB(
+            embedding_model=config.EMBEDDING_MODEL,
+            db_path=config.VECTOR_DB_PATH,
+            docs_path=config.DOCUMENTS_PATH
+        )
         
         if not vector_db.add_documents():
             raise RuntimeError("Document loading failed")
         
         logger.info("Initializing Response Generator...")
-        generator = ResponseGenerator()
+        generator = ResponseGenerator(
+            api_key=config.GEMINI_API_KEY,
+            model=config.GEMINI_MODEL
+        )
         
         return vector_db, generator
     except Exception as e:
@@ -35,14 +45,14 @@ def initialize_components():
         st.error("System initialization failed. Check logs.")
         st.stop()
 
-def generate_response(message: str, chat_history: List[Tuple[str, str]], vector_db: VectorDB, generator: ResponseGenerator) -> List[Tuple[str, str]]:
+def generate_response(message: str, vector_db: VectorDB, generator: ResponseGenerator) -> str:
     """Process user query through RAG pipeline"""
     try:
         # Document Retrieval
         retrieved = vector_db.query(message)
         if not retrieved['documents']:
             logger.warning("No documents found for query")
-            return chat_history + [(message, "No relevant information found")]
+            return "No relevant information found"
         
         # Prepare Context
         context = "\n\n".join(
@@ -52,12 +62,11 @@ def generate_response(message: str, chat_history: List[Tuple[str, str]], vector_
         logger.debug(f"Context prepared for query: {message[:50]}...")
         
         # Generate Response
-        response = generator.generate(message, context)
-        return chat_history + [(message, str(response))]
+        return str(generator.generate(message, context))
         
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}")
-        return chat_history + [(message, "Error processing request")]
+        return f"Error processing request: {str(e)}"
 
 def main():
     st.set_page_config(
@@ -92,15 +101,8 @@ def main():
         # Generate and display response
         with st.chat_message("assistant"):
             try:
-                # Convert message format for processing
-                tuple_history = [(m["content"], "") for m in st.session_state.messages if m["role"] == "user"]
-                
-                # Get response
-                response = generate_response(prompt, tuple_history, vector_db, generator)[-1][1]
-                
+                response = generate_response(prompt, vector_db, generator)
                 st.markdown(response)
-                
-                # Add assistant response to history
                 st.session_state.messages.append({"role": "assistant", "content": response})
             except Exception as e:
                 logger.error(f"UI rendering error: {str(e)}")
