@@ -1,84 +1,169 @@
 import os
 import sys
 import logging
-from typing import List, Tuple
 import streamlit as st
+from typing import List, Dict
+from datetime import datetime
 
-# Fix Python path
+# Fix Python path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[logging.StreamHandler()]
+    handlers=[
+        logging.FileHandler('app.log'),
+        logging.StreamHandler()
+    ]
 )
+logger = logging.getLogger(__name__)
 
 try:
-    # Absolute imports
     from utils.retrieval import VectorDB
     from utils.generation import ResponseGenerator
-    from utils.file_processor import FileProcessor  # Updated import
     from config import Config
 except ImportError as e:
-    logging.error(f"Import error: {str(e)}")
-    st.error("Configuration error - check logs")
+    logger.critical(f"Import error: {str(e)}")
+    st.error("System configuration error. Please check logs.")
     st.stop()
-
-# Rest of your app code...
 
 @st.cache_resource
 def initialize_components():
-    """Initialize RAG components with caching"""
+    """Initialize and cache RAG components"""
     try:
+        logger.info("Initializing system components...")
         config = Config()
+        
+        # Initialize VectorDB
+        logger.info("Setting up Vector Database...")
         vector_db = VectorDB(
             embedding_model=config.EMBEDDING_MODEL,
             db_path=config.VECTOR_DB_PATH,
             docs_path=config.DOCUMENTS_PATH
         )
         
-        if not vector_db.add_documents():
-            raise RuntimeError("Document loading failed")
-            
+        if not vector_db.load_or_create_index():
+            raise RuntimeError("VectorDB initialization failed")
+        
+        # Initialize Response Generator
+        logger.info("Initializing AI Generator...")
         generator = ResponseGenerator(
             api_key=config.GEMINI_API_KEY,
             model=config.GEMINI_MODEL
         )
+        
+        logger.info("All components initialized successfully")
         return vector_db, generator
+        
     except Exception as e:
-        logger.critical(f"Initialization failed: {str(e)}")
-        st.error("System initialization failed. Check logs.")
+        logger.critical(f"Component initialization failed: {str(e)}")
+        st.error("System startup failed. Please contact support.")
         st.stop()
 
+def retrieve_documents(vector_db: VectorDB, query: str) -> Dict:
+    """Retrieve relevant documents with error handling"""
+    try:
+        logger.info(f"Retrieving documents for query: {query[:50]}...")
+        results = vector_db.query(query, top_k=3)
+        
+        if not results['documents']:
+            logger.warning("No documents found for query")
+            return None
+            
+        logger.info(f"Retrieved {len(results['documents'])} relevant documents")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Document retrieval failed: {str(e)}")
+        return None
+
+def generate_context(retrieved: Dict) -> str:
+    """Format retrieved documents into context"""
+    context_parts = []
+    for i, (text, meta) in enumerate(zip(retrieved['documents'], retrieved['metadatas'])):
+        source = meta.get('source', f"Document {i+1}")
+        context_parts.append(
+            f"📄 {source}:\n"
+            f"{text[:1500]}{'...' if len(text) > 1500 else ''}"
+        )
+    return "\n\n".join(context_parts)
+
 def main():
-    st.set_page_config(page_title="RAG Chatbot", layout="wide")
+    # App configuration
+    st.set_page_config(
+        page_title="IQRA University - Virtual Office Platform",
+        page_icon="📚",
+        layout="centered",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Initialize components
     vector_db, generator = initialize_components()
     
+    # Session state initialization
     if "messages" not in st.session_state:
         st.session_state.messages = []
     
+    # Sidebar with info
+    with st.sidebar:
+        st.title("About")
+        st.markdown("""
+        **Virtual Office Platform**
+        - Document Q&A System
+        - Powered by RAG and Gemini AI
+        """)
+        st.divider()
+        st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    
+    # Main chat interface
+    st.title("📚 Virtual Office Platform")
+    st.caption("Ask questions about university documents")
+    
+    # Display chat history
     for message in st.session_state.messages:
-        with st.chat_message(message["role"]):
+        avatar = "👤" if message["role"] == "user" else "🤖"
+        with st.chat_message(message["role"], avatar=avatar):
             st.markdown(message["content"])
     
-    if prompt := st.chat_input("Ask about your documents..."):
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
+    # Chat input
+    if prompt := st.chat_input("Type your question here..."):
+        # Add user message to history
+        st.session_state.messages.append({
+            "role": "user",
+            "content": prompt,
+            "time": datetime.now().strftime("%H:%M")
+        })
+        
+        # Display user message
+        with st.chat_message("user", avatar="👤"):
             st.markdown(prompt)
         
-        with st.chat_message("assistant"):
+        # Generate response
+        with st.chat_message("assistant", avatar="🤖"):
             try:
-                retrieved = vector_db.query(prompt)
-                context = "\n\n".join(
-                    f"Source: {meta['source']}\n{text[:2000]}"
-                    for text, meta in zip(retrieved['documents'], retrieved['metadatas'])
-                )
-                response = generator.generate(prompt, context)
-                st.markdown(response)
-                st.session_state.messages.append({"role": "assistant", "content": response})
+                with st.spinner("Searching documents..."):
+                    retrieved = retrieve_documents(vector_db, prompt)
+                    
+                    if not retrieved:
+                        response = "No relevant documents found."
+                        st.markdown(response)
+                    else:
+                        context = generate_context(retrieved)
+                        with st.spinner("Generating response..."):
+                            response = generator.generate(prompt, context)
+                            st.markdown(response)
+                
+                # Add assistant response to history
+                st.session_state.messages.append({
+                    "role": "assistant", 
+                    "content": response,
+                    "time": datetime.now().strftime("%H:%M")
+                })
+                
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                logger.error(f"Chat error: {str(e)}")
+                st.error("An error occurred. Please try again.")
 
 if __name__ == "__main__":
     main()
