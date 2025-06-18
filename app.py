@@ -1,9 +1,11 @@
 import logging
 from typing import List, Tuple
 import streamlit as st
-from utils.retrieval import VectorDB
-from utils.generation import ResponseGenerator
-from config import Config
+import sys
+import os
+
+# Add project root to Python path
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 # Configure logging
 logging.basicConfig(
@@ -15,6 +17,15 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
+
+try:
+    from utils.retrieval import VectorDB
+    from utils.generation import ResponseGenerator
+    from config import Config
+except ImportError as e:
+    logger.error(f"Import error: {str(e)}")
+    st.error("Failed to import required modules. Check the logs.")
+    st.stop()
 
 @st.cache_resource
 def initialize_components():
@@ -62,7 +73,8 @@ def generate_response(message: str, vector_db: VectorDB, generator: ResponseGene
         logger.debug(f"Context prepared for query: {message[:50]}...")
         
         # Generate Response
-        return str(generator.generate(message, context))
+        response = generator.generate(message, context)
+        return str(response)
         
     except Exception as e:
         logger.error(f"Error processing query: {str(e)}")
