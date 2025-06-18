@@ -38,11 +38,7 @@ def initialize_components():
         
         # Initialize VectorDB
         logger.info("Setting up Vector Database...")
-        vector_db = VectorDB(
-            embedding_model=config.EMBEDDING_MODEL,
-            db_path=config.VECTOR_DB_PATH,
-            docs_path=config.DOCUMENTS_PATH
-        )
+        vector_db = VectorDB()
         
         if not vector_db.load_or_create_index():
             raise RuntimeError("VectorDB initialization failed")
