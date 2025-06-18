@@ -1,8 +1,9 @@
 import logging
-from typing import List, Tuple
-import streamlit as st
-import sys
 import os
+import sys
+from typing import List, Tuple
+
+import streamlit as st
 
 # Fix Python path for Streamlit Cloud
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
@@ -11,14 +12,12 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('app.log'),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
 
 try:
+    # Absolute imports
     from utils.retrieval import VectorDB
     from utils.generation import ResponseGenerator
     from config import Config
