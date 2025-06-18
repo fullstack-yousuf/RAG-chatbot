@@ -5,13 +5,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Config:
+    # Class variables (constants)
+    EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+    GEMINI_MODEL = "gemini-pro"
+    VECTOR_DB_PATH = "knowledge_base/faiss_db"
+    DOCUMENTS_PATH = "knowledge_base/documents"
+    
+    # Instance variables (for secrets)
     def __init__(self):
         self.GEMINI_API_KEY = self._get_secret("GEMINI_API_KEY")
-        self.EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-        self.GEMINI_MODEL = "gemini-pro"
-        self.VECTOR_DB_PATH = "knowledge_base/faiss_db"
-        self.DOCUMENTS_PATH = "knowledge_base/documents"
-    
+        
     def _get_secret(self, key: str) -> str:
         try:
             return st.secrets[key] or os.getenv(key)
