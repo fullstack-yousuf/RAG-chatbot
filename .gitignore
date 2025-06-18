@@ -7,3 +7,7 @@ __pycache__/
 *.sqlite
 *.db
 *.log
+
+# Environment
+.env
+.streamlit/secrets.toml
