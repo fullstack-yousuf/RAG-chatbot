@@ -1,13 +1,59 @@
-.venv/
-venv/
+# Python
 __pycache__/
-*.pyc
-.env
-*.env
-*.sqlite
-*.db
-*.log
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Environment
+# Virtual environment
+venv/
+ENV/
+env/
+
+# Logs
+*.log
+logs/
+
+# Environment files
 .env
-.streamlit/secrets.toml
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Streamlit
+.streamlit/
+
+# FAISS index
+knowledge_base/faiss_db/
+
+# .venv/
+# venv/
+# __pycache__/
+# *.pyc
+# .env
+# *.env
+# *.sqlite
+# *.db
+# *.log
