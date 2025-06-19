@@ -7,7 +7,7 @@ import logging
 from typing import Dict, List
 from sentence_transformers import SentenceTransformer
 from config import Config
-from utils.file_processor import FileProcessor
+from file_processor import FileProcessor
 
 logger = logging.getLogger(__name__)
 
