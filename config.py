@@ -17,7 +17,7 @@ class Config:
     else:
         logger.info("Gemini API key loaded successfully")
 
-    GEMINI_MODEL = "gemini-1.5-flash"
+    GEMINI_MODEL = "gemini-3-flash-preview"
     VECTOR_DB_PATH = "knowledge_base/faiss_db"
     DOCUMENTS_PATH = "knowledge_base/documents"
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
