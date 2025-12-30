@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class Config:
     # Class variables (constants)
     EMBEDDING_MODEL = "all-MiniLM-L6-v2"
-    GEMINI_MODEL = "gemini-pro"
+    GEMINI_MODEL = "gemini-3-flash-preview"
     VECTOR_DB_PATH = "knowledge_base/faiss_db"
     DOCUMENTS_PATH = "knowledge_base/documents"
     
